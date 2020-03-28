@@ -300,10 +300,31 @@ def data_by_continent():
 
 
 def most_cas_country(n):
-    # _, _, _, df_continents_cases, _ = data_preprocessing()
+    '''
+    get the n country with the most confirmed cases 
+    '''
     df, _ = data_processing()
     df_country = df.groupby('country').sum().drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Confirmed', ascending=False)[:n]
+    return df_country
+
+
+def most_death_country(n):
+    '''
+    get the n country with the  most corona death case
+    '''
+    df, _ = data_processing()
+    df_country = df.groupby('country').sum().drop(
+        columns=['FIPS', 'Lat', 'Long_']).sort_values('Deaths', ascending=False)[:n]
+    return df_country
+
+
+def data_by_country(country):
+    '''
+    the country data
+    '''
+    df, _ = data_processing()
+    df_country = df[df['country'] == country]
     return df_country
 
 

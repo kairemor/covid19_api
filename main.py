@@ -98,11 +98,7 @@ class GraphImage(Resource):
 @country_data.route("/<string:country>")
 class CountryDataOne(Resource):
     def get(self, country):
-        yesterday = datetime.today() - timedelta(days=1)
-        today = yesterday.strftime('%m-%d-%Y')
-        url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"+today+".csv"
-        df = pd.read_csv(url)
-        df = df[df['Country_Region'] == country]
+        df = data_by_country(country)
         death = df.Deaths.sum()
         confirmed = df.Confirmed.sum()
         recovery = df.Recovered.sum()
