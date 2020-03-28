@@ -1,13 +1,12 @@
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as snb
-from matplotlib import ticker
+# import matplotlib.pyplot as plt
+# import seaborn as snb
+# from matplotlib import ticker
 import pycountry_convert as pc
-import folium
-from datetime import datetime, timedelta
-from datetime import datetime, date
-from scipy.interpolate import make_interp_spline, BSpline
+# import folium
+from datetime import datetime, date, timedelta
+# from scipy.interpolate import make_interp_spline, BSpline
 import os
 import subprocess
 
@@ -75,7 +74,6 @@ def data_processing():
 
 
 def data_preprocessing():
-
     url1 = "data/time_series_covid19_confirmed_global.csv"
     url2 = "data/time_series_covid19_deaths_global.csv"
     url3 = "data/time_series_covid19_recovered_global.csv"
@@ -299,21 +297,29 @@ def data_by_continent():
     return (df_continent, continents)
 
 
-def most_cas_country(n):
+def most_cas_country(n, continent=None):
     '''
     get the n country with the most confirmed cases 
     '''
     df, _ = data_processing()
+
+    print(df)
+    if(continent):
+        df = df[df['continent'] == continent]
+    print(df)
     df_country = df.groupby('country').sum().drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Confirmed', ascending=False)[:n]
     return df_country
 
 
-def most_death_country(n):
+def most_death_country(n, continent=None):
     '''
     get the n country with the  most corona death case
     '''
     df, _ = data_processing()
+    if(continent):
+        df = df[df['continent'] == continent]
+
     df_country = df.groupby('country').sum().drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Deaths', ascending=False)[:n]
     return df_country
@@ -346,6 +352,10 @@ def download_data():
     os.chdir('data')
     os.remove("*")
     subprocess.call(['wget', url])
+    subprocess.call(['wget', url1])
+    subprocess.call(['wget', url2])
+    subprocess.call(['wget', url3])
+    subprocess.call(['wget', url4])
     os.chdir('..')
 
 

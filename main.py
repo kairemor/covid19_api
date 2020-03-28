@@ -42,13 +42,14 @@ class ContinentDataList(Resource):
         df, continents = data_by_continent()
         data = []
 
-        for country in continents.values():
-            data.append({country: {
-                'confirmed': str(df.loc[country, 'Confirmed']),
-                'recovery': str(df.loc[country, 'Recovered']),
-                'death': str(df.loc[country, 'Deaths']),
-                'active': str(df.loc[country, 'Active'])
-            }})
+        for continent in continents.values():
+            data.append({
+                'continent': continent,
+                'confirmed': str(df.loc[continent, 'Confirmed']),
+                'recovery': str(df.loc[continent, 'Recovered']),
+                'death': str(df.loc[continent, 'Deaths']),
+                'active': str(df.loc[continent, 'Active'])
+            })
         # print(data)
         return data
 
@@ -78,12 +79,67 @@ class MostCaseCountry(Resource):
         data = []
 
         for country in df.index:
-            data.append({country: {
+            data.append({
+                'country': country,
                 'confirmed': str(df.loc[country, 'Confirmed']),
                 'recovery': str(df.loc[country, 'Recovered']),
                 'death': str(df.loc[country, 'Deaths']),
                 'active': str(df.loc[country, 'Active'])
-            }})
+            })
+        # print(data)
+        return data
+
+
+@country_data.route("/most-death/<int:n>")
+class MostDeathCountry(Resource):
+    def get(self, n):
+        df = most_death_country(n)
+        data = []
+
+        for country in df.index:
+            data.append({
+                'country': country,
+                'confirmed': str(df.loc[country, 'Confirmed']),
+                'recovery': str(df.loc[country, 'Recovered']),
+                'death': str(df.loc[country, 'Deaths']),
+                'active': str(df.loc[country, 'Active'])
+            })
+
+        return data
+
+
+@country_data.route("/most-confirmed/<int:n>/<string:continent>")
+class MostCaseCountryByContinent(Resource):
+    def get(self, n, continent):
+        df = most_cas_country(n, continent)
+        data = []
+
+        for country in df.index:
+            data.append({
+                'country': country,
+                'confirmed': str(df.loc[country, 'Confirmed']),
+                'recovery': str(df.loc[country, 'Recovered']),
+                'death': str(df.loc[country, 'Deaths']),
+                'active': str(df.loc[country, 'Active'])
+            })
+        # print(data)
+        return data
+
+
+@country_data.route("/most-death/<int:n>/<string:continent>")
+class MostDeathCountryByContinent(Resource):
+    def get(self, n, continent):
+        df = most_death_country(n, continent)
+        data = []
+
+        for country in df.index:
+            data.append({
+                'country': country,
+                'confirmed': str(df.loc[country, 'Confirmed']),
+                'recovery': str(df.loc[country, 'Recovered']),
+                'death': str(df.loc[country, 'Deaths']),
+                'active': str(df.loc[country, 'Active'])
+            })
         # print(data)
         return data
 
