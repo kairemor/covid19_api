@@ -3,13 +3,14 @@ from flask import Flask, send_from_directory
 from flask_restplus import Api, Resource
 from datetime import datetime, timedelta
 import pandas as pd
-
+from flask_cors import CORS
 
 from data import *
 
 image_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'image')
 
 app = Flask(__name__)
+CORS(app)
 api = Api(app=app)
 
 ns_conf = api.namespace('conferences', description='Conference operations')
@@ -21,6 +22,8 @@ continent_data = api.namespace(
     'continent', description="get data by continent ")
 graph_image = api.namespace(
     'graph', description="get a image where we have a three graph showing the progression of confirmed deaths and recovery cas of covid 19")
+graph_data = api.namespace(
+    'grapth_data', description="get a list of evolution of covid19 cases deaths and recovered ")
 
 
 @app_home.route("/")
@@ -57,18 +60,19 @@ class ContinentDataList(Resource):
 @country_data.route("/")
 class CountryDataList(Resource):
     def get(self):
-        yesterday = datetime.today() - timedelta(days=1)
-        today = yesterday.strftime('%m-%d-%Y')
-        # url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"+today+".csv"
-        url = 'data/'+today+".csv"
-        df = pd.read_csv(url)
+        df, _ = data_processing()
         death = df.Deaths.sum()
         confirmed = df.Confirmed.sum()
         recovery = df.Recovered.sum()
         active = df.Active.sum()
-        last_update = df.Last_Update.values[0]
+        # last_update = df.Last_Update.values[0]
+        recovery_rate = recovery / confirmed
+        death_rate = death / confirmed
+        last_update = ''
         data = {'confirmed': str(confirmed), 'death': str(death), 'recovery': str(
-            recovery), 'last_updated': str(last_update), 'active': str(active)}
+            recovery), 'last_updated': str(last_update), 'active': str(active), 'recovery_rate': recovery_rate,
+            'death_rate': death_rate
+        }
         return data
 
 
@@ -131,7 +135,6 @@ class MostDeathCountryByContinent(Resource):
     def get(self, n, continent):
         df = most_death_country(n, continent)
         data = []
-
         for country in df.index:
             data.append({
                 'country': country,
@@ -155,14 +158,56 @@ class GraphImage(Resource):
 class CountryDataOne(Resource):
     def get(self, country):
         df = data_by_country(country)
-        death = df.Deaths.sum()
-        confirmed = df.Confirmed.sum()
-        recovery = df.Recovered.sum()
-        active = df.Active.sum()
-        last_update = df.Last_Update.values[0]
-        data = {'confirmed': str(confirmed), 'death': str(death), 'recovery': str(
-            recovery), 'last_updated': str(last_update), 'active': str(active)}
+        death = df.Deaths
+        confirmed = df.Confirmed
+        recovery = df.Recovered
+        active = df.Active
+        last_update = ""
+        # last_update = df.Last_Update.values[0]
+        data = {'confirmed': str(confirmed),
+                'death': str(death),
+                'recovery': str(recovery),
+                'last_updated': str(last_update),
+                'active': str(active),
+                'recovery_rate': df.recovery_rate,
+                'death_rate': df.death_rate
+                }
         return data
+
+
+@graph_data.route("/")
+class GraphListData(Resource):
+    def get(self):
+        column_name, values_confirmed, values_deaths, values_recovered = get_graph_data()
+
+        values_confirmed = [str(int(value)) for value in values_confirmed]
+        values_recovered = [str(int(value)) for value in values_recovered]
+        values_deaths = [str(int(value)) for value in values_deaths]
+
+        column_str = ",".join(column_name)
+        values_confirmed_str = ",".join(values_confirmed)
+        values_recovered_str = ",".join(values_recovered)
+        values_deaths_str = ",".join(values_deaths)
+
+        return {'columns': column_str, 'values_confirmed': values_confirmed_str, 'values_deaths': values_deaths_str, 'values_recovered': values_recovered_str}
+
+
+@graph_data.route("/<string:country>")
+class GraphListData(Resource):
+    def get(self, country):
+        column_name, values_confirmed, values_deaths, values_recovered = get_graph_data(
+            country)
+
+        values_confirmed = [str(int(value)) for value in values_confirmed]
+        values_recovered = [str(int(value)) for value in values_recovered]
+        values_deaths = [str(int(value)) for value in values_deaths]
+
+        column_str = ",".join(column_name)
+        values_confirmed_str = ",".join(values_confirmed)
+        values_recovered_str = ",".join(values_recovered)
+        values_deaths_str = ",".join(values_deaths)
+
+        return {'columns': column_str, 'values_confirmed': values_confirmed_str, 'values_deaths': values_deaths_str, 'values_recovered': values_recovered_str}
 
 
 if __name__ == "__main__":

@@ -23,8 +23,6 @@ def country_to_continent_code(country):
 def data_processing():
     yesterday = datetime.today() - timedelta(days=1)
     today = yesterday.strftime('%m-%d-%Y')
-    # url = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/"+today+".csv"
-    # df = pd.read_csv(url)
     url = 'data/'+today+".csv"
     df = pd.read_csv(url)
 
@@ -53,6 +51,10 @@ def data_processing():
 
     df.loc[df['country'] == 'Gambia, The', "country"] = 'The Gambia'
 
+    df.loc[df['country'] == 'United States', 'Active'] = df.loc[df['country'] == 'United States', 'Confirmed'] - \
+        df.loc[df['country'] == 'United States', 'Deaths'] - \
+        df.loc[df['country'] == 'United States', "Recovered"]
+
     # getting all countries
     countries = np.asarray(df["country"])
     # Continent_code to Continent_names
@@ -69,6 +71,12 @@ def data_processing():
     # Collecting Continent Information
     df.insert(2, "continent", [
         continents[country_to_continent_code(country)] for country in countries[:]])
+
+    df = df.groupby('country').sum()
+
+    df = df[df['Confirmed'] > 0]
+    df['recovery_rate'] = df.apply(lambda x: x.Recovered/x.Confirmed, axis=1)
+    df['death_rate'] = df.apply(lambda x: x.Deaths/x.Confirmed, axis=1)
 
     return (df, continents)
 
@@ -214,6 +222,61 @@ def data_preprocessing():
     return (df_confirmed, df_deaths, df_recovered, df_continents_cases, df_countries_cases)
 
 
+def process_day_data():
+    pass
+
+
+def get_graph_data(pays=None):
+    url = "data/time_series_covid19_confirmed_global.csv"
+    url2 = "data/time_series_covid19_deaths_global.csv"
+    url3 = "data/time_series_covid19_recovered_global.csv"
+
+    df_confirmed = pd.read_csv(url)
+    df_recovered = pd.read_csv(url3)
+    df_deaths = pd.read_csv(url2)
+
+    if pays:
+        df_confirmed = df_confirmed[df_confirmed['Country/Region'] == pays]
+        df_recovered = df_recovered[df_recovered['Country/Region'] == pays]
+        df_deaths = df_deaths[df_deaths['Country/Region'] == pays]
+    columns_name = [str(column)[:4]
+                    for column in df_confirmed.columns if str(column).endswith('20')]
+    columns_length = len(columns_name)
+    number_of_point = 10
+    step = columns_length // number_of_point
+
+    columns_name.reverse()
+
+    taked_name = [columns_name[(i*step)] for i in range(number_of_point)]
+    taked_name.reverse()
+
+    df2_confirmed = df_confirmed.sum()
+    df2_recovered = df_recovered.sum()
+    df2_deaths = df_deaths.sum()
+
+    values_confirmed = list(df2_confirmed[4:].values)
+    values_confirmed.reverse()
+
+    values_recovered = list(df2_recovered[4:].values)
+    values_recovered.reverse()
+
+    values_deaths = list(df2_deaths[4:].values)
+    values_deaths.reverse()
+    taked_value_confirmed = [
+        values_confirmed[(i*step)] for i in range(number_of_point)]
+    taked_value_confirmed.reverse()
+
+    taked_value_recovered = [
+        values_recovered[(i*step)] for i in range(number_of_point)]
+    taked_value_recovered.reverse()
+
+    taked_value_deaths = [values_deaths[(i*step)]
+                          for i in range(number_of_point)]
+    taked_value_deaths.reverse()
+
+    return (taked_name, taked_value_confirmed, taked_value_deaths, taked_value_recovered)
+
+
 def initData():
     df_confirmed = pd.read_csv(
         "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
@@ -307,7 +370,7 @@ def most_cas_country(n, continent=None):
     if(continent):
         df = df[df['continent'] == continent]
     print(df)
-    df_country = df.groupby('country').sum().drop(
+    df_country = df.drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Confirmed', ascending=False)[:n]
     return df_country
 
@@ -320,7 +383,7 @@ def most_death_country(n, continent=None):
     if(continent):
         df = df[df['continent'] == continent]
 
-    df_country = df.groupby('country').sum().drop(
+    df_country = df.drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Deaths', ascending=False)[:n]
     return df_country
 
@@ -330,7 +393,7 @@ def data_by_country(country):
     the country data
     '''
     df, _ = data_processing()
-    df_country = df[df['country'] == country]
+    df_country = df.loc[country]
     return df_country
 
 
@@ -350,7 +413,11 @@ def download_data():
     except Exception as e:
         pass
     os.chdir('data')
-    os.remove("*")
+    try:
+        for filename in os.listdir():
+            os.remove(filename)
+    except Exception:
+        pass
     subprocess.call(['wget', url])
     subprocess.call(['wget', url1])
     subprocess.call(['wget', url2])
