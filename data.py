@@ -72,12 +72,6 @@ def data_processing():
     df.insert(2, "continent", [
         continents[country_to_continent_code(country)] for country in countries[:]])
 
-    df = df.groupby('country').sum()
-
-    df = df[df['Confirmed'] > 0]
-    df['recovery_rate'] = df.apply(lambda x: x.Recovered/x.Confirmed, axis=1)
-    df['death_rate'] = df.apply(lambda x: x.Deaths/x.Confirmed, axis=1)
-
     return (df, continents)
 
 
@@ -222,8 +216,13 @@ def data_preprocessing():
     return (df_confirmed, df_deaths, df_recovered, df_continents_cases, df_countries_cases)
 
 
-def process_day_data():
-    pass
+def process_day_data(df):
+    df = df.groupby('country').sum()
+
+    df = df[df['Confirmed'] > 0]
+    df['recovery_rate'] = df.apply(lambda x: x.Recovered/x.Confirmed, axis=1)
+    df['death_rate'] = df.apply(lambda x: x.Deaths/x.Confirmed, axis=1)
+    return df
 
 
 def get_graph_data(pays=None):
@@ -355,6 +354,7 @@ def initData():
 
 def data_by_continent():
     df, continents = data_processing()
+    print(df.columns)
     df_continent = df.groupby('continent').sum().drop(
         columns=['FIPS', 'Lat', 'Long_'])
     return (df_continent, continents)
@@ -366,10 +366,9 @@ def most_cas_country(n, continent=None):
     '''
     df, _ = data_processing()
 
-    print(df)
     if(continent):
         df = df[df['continent'] == continent]
-    print(df)
+    df = process_day_data(df)
     df_country = df.drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Confirmed', ascending=False)[:n]
     return df_country
@@ -382,7 +381,7 @@ def most_death_country(n, continent=None):
     df, _ = data_processing()
     if(continent):
         df = df[df['continent'] == continent]
-
+    df = process_day_data(df)
     df_country = df.drop(
         columns=['FIPS', 'Lat', 'Long_']).sort_values('Deaths', ascending=False)[:n]
     return df_country
@@ -393,6 +392,7 @@ def data_by_country(country):
     the country data
     '''
     df, _ = data_processing()
+    df = process_day_data(df)
     df_country = df.loc[country]
     return df_country
 

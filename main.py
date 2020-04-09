@@ -51,7 +51,9 @@ class ContinentDataList(Resource):
                 'confirmed': str(df.loc[continent, 'Confirmed']),
                 'recovery': str(df.loc[continent, 'Recovered']),
                 'death': str(df.loc[continent, 'Deaths']),
-                'active': str(df.loc[continent, 'Active'])
+                'active': str(df.loc[continent, 'Active']),
+                'recovery_rate': str(df.loc[continent, 'Recovered'] / df.loc[continent, 'Confirmed']),
+                'death_rate': str(df.loc[continent, 'Deaths'] / df.loc[continent, 'Confirmed']),
             })
         # print(data)
         return data
@@ -88,7 +90,9 @@ class MostCaseCountry(Resource):
                 'confirmed': str(df.loc[country, 'Confirmed']),
                 'recovery': str(df.loc[country, 'Recovered']),
                 'death': str(df.loc[country, 'Deaths']),
-                'active': str(df.loc[country, 'Active'])
+                'active': str(df.loc[country, 'Active']),
+                'recovery_rate': str(df.loc[country, 'recovery_rate']),
+                'death_rate': str(df.loc[country, 'death_rate']),
             })
         # print(data)
         return data
@@ -124,7 +128,9 @@ class MostCaseCountryByContinent(Resource):
                 'confirmed': str(df.loc[country, 'Confirmed']),
                 'recovery': str(df.loc[country, 'Recovered']),
                 'death': str(df.loc[country, 'Deaths']),
-                'active': str(df.loc[country, 'Active'])
+                'active': str(df.loc[country, 'Active']),
+                'recovery_rate': str(df.loc[country, 'recovery_rate']),
+                'death_rate': str(df.loc[country, 'death_rate']),
             })
         # print(data)
         return data
